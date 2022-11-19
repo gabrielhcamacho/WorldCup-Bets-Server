@@ -3,11 +3,15 @@ import { PrismaClient } from '@prisma/client'
 import cors from '@fastify/cors'
 import { z } from 'zod'
 import ShortUniqueId from 'short-unique-id'
+import { GroupRoutes } from './routes/group'
+import { prisma } from './lib/prisma'
+import { GameRoutes } from './routes/game'
+import { GuessRoutes } from './routes/guess'
+import { UserRoutes } from './routes/user'
+import { AuthRoutes } from './routes/auth'
 
 
-const prisma = new PrismaClient({
-    log: ['query']
-})
+
 
 async function start() {
 
@@ -15,55 +19,19 @@ async function start() {
         logger: true,
     })
 
-
     //esse codigo permite qualquer aplicacao acessar o nosso backend
     await fastify.register(cors, {
         origin: true
         // depois de feito o deploy coloca o dominio, ex origin: www.byra.com
     })
 
-
-    fastify.get('/groups/count', async () => {
-        const count = await prisma.group.count()
-
-        return { count }
-    })
+    await fastify.register(AuthRoutes)
+    await fastify.register(GameRoutes)
+    await fastify.register(GroupRoutes)
+    await fastify.register(GuessRoutes)
+    await fastify.register(UserRoutes)
     
-    fastify.get('/users/count', async () => {
-        const count = await prisma.user.count()
 
-        return { count }
-    })
-
-    fastify.get('/guesses/count', async () => {
-        const count = await prisma.guess.count()
-
-        return { count }
-    })
-
-
-    fastify.post('/groups', async (request, reply) => {
-
-        //para não deixar criar o campo null, se puder ser nulo coloca o nullable
-        const createGroupBody = z.object({
-            title: z.string(),
-        })
-        
-        const { title } = createGroupBody.parse(request.body)
-
-        const generate = new ShortUniqueId({ length: 6 })
-        const code =  String(generate()).toUpperCase()
-
-        await prisma.group.create({
-            data: {
-                title,
-                code,
-            }
-        })
-
-        return reply.status(201).send({ code })
-    })
-    
 
     await fastify.listen({ port: 3333 })
 }
