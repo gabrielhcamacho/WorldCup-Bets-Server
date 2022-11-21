@@ -24,7 +24,7 @@ async function start() {
     })
 
     await fastify.register(jwt, {
-        secret: `${process.env.secretJWT}`,
+        secret: `nlwcopa`,
     })
 
     await fastify.register(AuthRoutes)
@@ -34,8 +34,7 @@ async function start() {
     await fastify.register(UserRoutes)
     
 
-
-    await fastify.listen({ port: 3333 })
+    await fastify.listen({ port: 3333, host: '0.0.0.0' })
 }
 
 start()
