@@ -21,9 +21,9 @@ model Group {
   createdAt DateTime @default(now())
   ownerId   String?
 
+  participant Participant[]
   owner User? @relation(fields: [ownerId], references: [id])
 
-  participant Participant[]
 }
 
 model Participant {
@@ -71,4 +71,6 @@ model Guess {
 
   participant Participant @relation(fields: [participantId], references: [id])
   game        Game        @relation(fields: [gameId], references: [id])
+
+  @@unique([participantId, gameId])
 }

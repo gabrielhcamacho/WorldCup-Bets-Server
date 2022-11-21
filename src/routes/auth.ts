@@ -2,8 +2,20 @@ import { FastifyInstance } from "fastify"
 import ShortUniqueId from "short-unique-id"
 import { z } from "zod"
 import { prisma } from "../lib/prisma"
+import { authenticate } from "../plugins/authenticate"
 
 export async function AuthRoutes(fastify: FastifyInstance) {
+
+    fastify.get(
+        '/me', 
+        {
+            onRequest: [authenticate]
+        },
+        async(request) => {
+        
+
+        return { user: request.user }
+    })
 
     fastify.post('/users', async (request) => {
 

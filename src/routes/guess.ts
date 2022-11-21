@@ -1,5 +1,7 @@
 import { FastifyInstance } from "fastify"
+import { z } from "zod"
 import { prisma } from "../lib/prisma"
+import { authenticate } from "../plugins/authenticate"
 
 export async function GuessRoutes(fastify: FastifyInstance){
 
@@ -7,6 +9,84 @@ export async function GuessRoutes(fastify: FastifyInstance){
         const count = await prisma.guess.count()
     
         return { count }
+    })
+
+    fastify.post('/groups/:groupsId/games/:gameId/guesses', {
+        onRequest: [authenticate]
+    }, async(request, reply) => {
+        const createGuessParams = z.object({
+            groupId: z.string(),
+            gameId: z.string(),
+        })
+
+        const createGuessBody = z.object({
+            firstTeamPoints: z.number(),
+            secondTeamPoints: z.number(),
+        })
+
+        const { groupId, gameId } = createGuessParams.parse(request.params)
+        const { firstTeamPoints, secondTeamPoints } = createGuessBody.parse(request.body)
+
+        const participant = await prisma.participant.findUnique({
+            where: {
+                userId_groupId:{
+                    groupId,
+                    userId: request.user.sub
+                }
+            }
+        })
+
+        if(!participant){
+            return reply.status(400).send({
+                message: "You're not allowed to create a guess in this poll"
+            })
+        }
+
+        const guess = await prisma.guess.findUnique({
+            where: {
+                participantId_gameId: {
+                    participantId: participant.id,
+                    gameId
+                }
+            }
+        })
+
+        if(guess){
+            return reply.status(400).send({
+                message: "You already sent a guess to this game on this group"
+            })
+        }
+
+        const game = await prisma.game.findUnique({
+            where: {
+                id:gameId,
+            }
+        })
+
+        if(!game){
+            return reply.status(400).send({
+                message: "Game not found."
+            })
+        }
+
+        if(game.date < new Date()){
+            return reply.status(400).send({
+                message: "You cannot send guesses after the game date."
+            })
+        }
+
+        await prisma.guess.create({
+            data: {
+                gameId,
+                participantId: participant.id,
+                firstTeamPoints,
+                secondTeamPoints,
+            }
+        })
+
+        return reply.status(201).send()
+
+
     })
     
 }
