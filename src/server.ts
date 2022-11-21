@@ -1,10 +1,8 @@
 import Fastify from 'fastify'
-import { PrismaClient } from '@prisma/client'
 import cors from '@fastify/cors'
-import { z } from 'zod'
-import ShortUniqueId from 'short-unique-id'
+import jwt from '@fastify/jwt'
+
 import { GroupRoutes } from './routes/group'
-import { prisma } from './lib/prisma'
 import { GameRoutes } from './routes/game'
 import { GuessRoutes } from './routes/guess'
 import { UserRoutes } from './routes/user'
@@ -23,6 +21,10 @@ async function start() {
     await fastify.register(cors, {
         origin: true
         // depois de feito o deploy coloca o dominio, ex origin: www.byra.com
+    })
+
+    await fastify.register(jwt, {
+        secret: `${process.env.secretJWT}`,
     })
 
     await fastify.register(AuthRoutes)

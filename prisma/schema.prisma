@@ -32,7 +32,7 @@ model Participant {
   userId  String
   groupId String
 
-  user User  @relation(fields: [userId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
   group Group @relation(fields: [groupId], references: [id])
 
   //só vai ter no maximo 1 registro desses 2
@@ -45,6 +45,7 @@ model User {
   email     String   @unique
   avatarUrl String?
   createdAt DateTime @default(now())
+  googleId  String?   @unique
 
   participatingAt Participant[]
   ownGroups       Group[]
